@@ -1,6 +1,7 @@
 package com.mau.rediblaster.core;
 
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPubSub;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
 
@@ -9,54 +10,95 @@ import java.util.List;
 
 public class Main {
 
+    private static long START_TIME;
+
     public static void main(String[] args) {
 
         final Jedis jedis = new Jedis("localhost");
-        long startTime = System.currentTimeMillis();
 
-        //fillRedisPipelined(jedis);
+        fillRedisPipelined(jedis);
         readRedisPipelined(jedis);
-
-        System.out.println("Operations took " + (System.currentTimeMillis() - startTime));
+        subscribeRedisKeys(jedis);
     }
 
     public static void fillRedis(final Jedis jedis) {
 
-        for (int i=0; i<500000; i++) {
-            if (i % 1000 == 0)
+        startTimer();
+        for (int i=0; i<10000000; i++) {
+            if (i % 10000 == 0)
                 System.out.println("Finished " + i);
             jedis.set("normalKey"+i, "normalValue"+i);
         }
+        endTimer("Non pipelined PUTs");
     }
 
     public static void fillRedisPipelined(final Jedis jedis) {
 
+        startTimer();
         int commandBatchSize = 1000;
-        for (int i=1; i<=5000; i++) {
+        for (int i=0; i<10000; i++) {
 
             Pipeline pipeline = jedis.pipelined();
-            for (int j=1; j<commandBatchSize; j++) {
-                int index = i * commandBatchSize + j;
-                pipeline.set("pipelinedKey" + index, "pipelinedValue" + index);
+            int index = i * commandBatchSize;
+            for (int j=1; j<=commandBatchSize; j++) {
+                pipeline.set("pipelinedKey" + (index+j), "pipelinedValue" + (index+j));
             }
             pipeline.sync();
             System.out.println("Completed " + i);
         }
+        endTimer("Pipelined PUTs");
     }
 
     public static void readRedisPipelined(final Jedis jedis) {
 
+        startTimer();
         int commandBatchSize = 1000;
-        for (int i=1; i<=5000; i++) {
+        for (int i=0; i<10000; i++) {
 
             List<Response<String>> responseList = new ArrayList<>(commandBatchSize);
             Pipeline pipeline = jedis.pipelined();
+            int index = i * commandBatchSize;
             for (int j=1; j<=commandBatchSize; j++) {
-                responseList.add(pipeline.get("pipelinedKey" + (i * commandBatchSize + j)));
+                responseList.add(pipeline.get("pipelinedKey" + (index+j)));
             }
             pipeline.sync();
-            System.out.println(responseList.get(commandBatchSize-1).get());
+            System.out.println(responseList.get(0).get());
             System.out.println("Completed " + i);
         }
+        endTimer("Pipelined GETs");
+    }
+
+    public static void subscribeRedisKeys(final Jedis jedis) {
+
+        startTimer();
+        JedisPubSub subscriber = new RedisSubscriber();
+        Thread subscriberThread = new Thread(() -> {
+            jedis.subscribe(subscriber, "pipelinedKey1");
+        }, "subscriptionThread");
+        subscriberThread.start();
+
+        try {
+            System.out.println("Allowing jedisPubSub to establish");
+            Thread.sleep(2000);
+        } catch(Exception e) {
+            System.out.println("Interruption");
+        }
+        for (int i=0; i<10000000; i++) {
+            subscriber.subscribe("pipelinedKey"+i);
+            if (i % 10000 == 0) {
+                System.out.println("Finished subscription " + i);
+            }
+        }
+        endTimer("SUBSCRIBEs");
+        System.out.println("Finished subscribing to 10000000 keys");
+        subscriberThread.stop();
+    }
+
+    private static void startTimer() {
+        START_TIME = System.currentTimeMillis();
+    }
+
+    private static void endTimer(final String action) {
+        System.out.println(action + " took " + (System.currentTimeMillis() - START_TIME));
     }
 }
