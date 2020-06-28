@@ -12,15 +12,20 @@ public class Main {
 
     private static long START_TIME;
 
+    /**
+     * Benchmarking speed of 10 million SETs, GETs, and SUBSCRIBEs in redis using the java client {@link Jedis}
+     */
     public static void main(String[] args) {
 
         final Jedis jedis = new Jedis("localhost");
-
         fillRedisPipelined(jedis);
         readRedisPipelined(jedis);
         subscribeRedisKeys(jedis);
     }
 
+    /**
+     * Fill local redis instance in non-pipelined fashion
+     */
     public static void fillRedis(final Jedis jedis) {
 
         startTimer();
@@ -32,6 +37,10 @@ public class Main {
         endTimer("Non pipelined PUTs");
     }
 
+    /**
+     * Fill local redis instance in pipelined fashion. This should achieve ~5x more throughput than
+     * non-pipelined SETs
+     */
     public static void fillRedisPipelined(final Jedis jedis) {
 
         startTimer();
@@ -46,9 +55,13 @@ public class Main {
             pipeline.sync();
             System.out.println("Completed " + i);
         }
-        endTimer("Pipelined PUTs");
+        endTimer("Pipelined SETs");
     }
 
+    /**
+     * Get values from local redis instance in pipelined fashion. This should achieve ~5x more throughput
+     * than non-pipelined GETs
+     */
     public static void readRedisPipelined(final Jedis jedis) {
 
         startTimer();
@@ -68,6 +81,10 @@ public class Main {
         endTimer("Pipelined GETs");
     }
 
+    /**
+     * Subscribe to values from local redis instance. {@link JedisPubSub} does not support pipelining,
+     * and consumes an entire thread as it polls redis for updates.
+     */
     public static void subscribeRedisKeys(final Jedis jedis) {
 
         startTimer();
