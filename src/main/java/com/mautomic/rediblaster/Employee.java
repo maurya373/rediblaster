@@ -6,14 +6,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Employee {
 
-    private final String id;
+    private final int id;
     private final String firstName;
     private final String lastName;
     private final String email;
     private final String occupation;
     private final int salary;
 
-    public Employee(String id, String firstName, String lastName, String email, String occupation, int salary) {
+    public Employee(int id, String firstName, String lastName, String email, String occupation, int salary) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -23,7 +23,7 @@ public class Employee {
     }
 
     @JsonProperty("id")
-    public String getId() {
+    public int getId() {
         return id;
     }
 
