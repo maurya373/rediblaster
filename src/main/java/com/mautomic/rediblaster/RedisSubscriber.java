@@ -1,4 +1,4 @@
-package com.mau.rediblaster.core;
+package com.mautomic.rediblaster;
 
 import redis.clients.jedis.JedisPubSub;
 
