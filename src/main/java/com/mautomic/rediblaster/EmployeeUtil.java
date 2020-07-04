@@ -9,13 +9,13 @@ public class EmployeeUtil {
     private static String[] occupations = {"Full Stack Developer", "Frontend Developer", "Backend Developer", "Manager"};
 
     static {
-        char letter='a';
+        char letter = 'a';
         for (int i=0; i<letters.length; i++) {
-            letters[i++] = letter++;
+            letters[i] = letter++;
         }
     }
 
-    private static Employee generateEmployee(int id) {
+    public static Employee generateEmployee(int id) {
         String firstName = generateName(5);
         String lastName = generateName(8);
         String email = generateEmail(firstName, lastName);

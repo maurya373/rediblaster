@@ -1,5 +1,9 @@
 package com.mautomic.rediblaster;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Employee {
 
     private final String id;
@@ -18,26 +22,32 @@ public class Employee {
         this.salary = salary;
     }
 
+    @JsonProperty("id")
     public String getId() {
         return id;
     }
 
+    @JsonProperty("firstName")
     public String getFirstName() {
         return firstName;
     }
 
+    @JsonProperty("lastName")
     public String getLastName() {
         return lastName;
     }
 
+    @JsonProperty("email")
     public String getEmail() {
         return email;
     }
 
+    @JsonProperty("occupation")
     public String getOccupation() {
         return occupation;
     }
 
+    @JsonProperty("salary")
     public int getSalary() {
         return salary;
     }
